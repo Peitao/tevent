@@ -4,7 +4,7 @@
 // 这个
 class Link {
  public:
-  typedef boost::function<void(Buffer *,Buffer *)> OnReadCallBack;
+  typedef boost::function<void(Link *, Buffer *,Buffer *)> OnReadCallBack;
   Link(int fd, std::string ip, int port, EventLoop * loop, OnReadCallBack rcb) {
     fd_ = fd;
     ip_ = ip;
@@ -27,19 +27,24 @@ class Link {
     // 每个 link 和 fd 绑定 生命周期一样
     ::close(fd_);
   }
+  void EnableWrite() {
+    handler_->watch_events_ |= EPOLLOUT;
+    handler_->UpdateToEventLoop();
+  }
   void CallBack(Handler * h, uint32 events) {
     std::cout << "LinkCallBack" << std::endl;
     if (events & EPOLLIN) {
       std::cout << "\tEPOLLIN" << std::endl;
       Buffer * in = &handler_->in_buf_;
       Buffer * out = &handler_->out_buf_;
+      in->MakeBufferSize(1024);
       int size = ::read(handler_->fd_, in->GetBuffer(), in->GetBufferSize());
       if (size == 0) {
         // ...
       } else if (size > 0) {
         in->SetBufferUsed(size);
       }
-      rcb_(in, out);
+      rcb_(this, in, out);
       // 如果 out 不是空 开启写!
       if (out->GetDataSize() && (!(handler_->watch_events_& EPOLLOUT))) {
         handler_->watch_events_ |= EPOLLOUT;

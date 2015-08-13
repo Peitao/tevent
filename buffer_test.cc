@@ -40,5 +40,14 @@ int main(int argc, const char *argv[])
   buffer.TakeData(4);
   buffer.GetDataAsString(&data);
   std::cout << data << std::endl;
+  std::cout << "======================" << std::endl;
+  Buffer buffer1;
+  buffer1.Append("hehe");
+  buffer1.Append("haah");
+  std::string hehe;
+  buffer1.GetDataAsString(&hehe);
+  std::cout << hehe << std::endl;
+  std::cout << buffer1.GetDataSize() << std::endl;
+  
   return 0;
 }
