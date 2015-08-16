@@ -9,7 +9,8 @@ class MyService : public Service {
   }
   void OnRequestDoInThreads(HttpRequst * req, Done done) {
     std::cout << "OnRequestDoInThreads" << std::endl;
-    req->resopnse = "200 ok to:\n" + req->raw_header;
+    //req->resopnse = "200 ok to:\n" + req->raw_header;
+    req->resopnse = "hello world!!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     done();
   }
  private:

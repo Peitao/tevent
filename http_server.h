@@ -51,7 +51,10 @@ class HttpServer : public BaseServer {
     if (req->resopnse.find("alive") != std::string::npos) {
       wb_data->close_when_write_done = false;
     }
-    wb_data->data.swap(req->resopnse);
+    // add header
+    std::string header = "HttP/1.1 200 OK\r\nContent-Length:64\r\nContent-Type: text/html;\r\n\r\n" + req->resopnse;
+    std::cout << req->resopnse.size();
+    wb_data->data.swap(header);
     WakeUpForWriteBackInEventLoop(wb_data);
     delete req;
   }
