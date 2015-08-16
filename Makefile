@@ -1,4 +1,4 @@
-OBJS = epoller.o eventloop.o wrapper.o buffer.o threads.o
+OBJS = epoller.o eventloop.o wrapper.o buffer.o threads.o link.o
 CFLAGS += -O2 --std=c++0x 
 #CFLAGS += -O2 --std=c++0x -I/home/peitao/work/build_tools/third_party/include
 LIB += -lrt -pthread
@@ -16,6 +16,8 @@ buffer.o:buffer.cc *.h
 	g++ -c buffer.cc ${CFLAGS}
 threads.o:threads.cc *.h
 	g++ -c threads.cc ${CFLAGS}
+link.o:link.cc *.h
+	g++ -c link.cc ${CFLAGS}
 clean:
 	rm -f *.o app *_test
 

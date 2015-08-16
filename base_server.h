@@ -1,4 +1,5 @@
 #pragma once
+#include <signal.h>
 #include "handler.h"
 #include "eventloop.h"
 #include "wrapper.h"
@@ -9,7 +10,9 @@
 // 
 class BaseServer {
  public:
-  BaseServer(int port):acceptor(port, &mloop) {}
+  BaseServer(int port):acceptor(port, &mloop) {
+    signal(SIGPIPE, SIG_IGN);
+  }
   void Run() {
     acceptor.SetOnAcceptorCallBack(
         boost::bind(&BaseServer::OnNewConnetion, this, _1, _2, _3)
@@ -36,30 +39,43 @@ class BaseServer {
                            );
     links.push_back(link);
   }
+  // 由于 Buffer 不是线程安全的
+  // 所以需要在 io 线程写 buffer 
+  struct WriteBackStruct {
+    Link * link;
+    Buffer * out;
+    std::string data;
+    bool close_when_write_done;
+  };
   // 用回异步回写 link 的输出缓冲区
   // 这个函数是多线程安全的 用于 具体 server 
   // 的 done 函数调用
-  void WakeUpForWriteBackInEventLoop(Link * link) {
+  void WakeUpForWriteBackInEventLoop(WriteBackStruct * write_back_data) {
     std::cout << "add wake up " << std::endl;
-    write_back_queue.push(link);
+    write_back_queue.push(write_back_data);
   }
   void WriteBack(Handler * h, uint32 events) {
     std::cout << "WriteBack" << std::endl;
     if (events & EPOLLIN) {
-      Link * link;
-      if (write_back_queue.pop(&link) != 1) {
+      WriteBackStruct * wb_data;
+      if (write_back_queue.pop(&wb_data) != 1) {
         std::cout << "SelectableQueue pop -1" << std::endl;
       }
       // 开启这个 link 的写事件
       std::cout << "do wake up " << std::endl;
-      link->EnableWrite();
+      wb_data->out->Append(wb_data->data);
+      wb_data->link->EnableWrite();
+      wb_data->link->DecRequest();
+      if (wb_data->close_when_write_done)
+        wb_data->link->SetCloseWhenWriteDone();
+      delete wb_data;
     }
   }
  private:
   EventLoop mloop;
   Acceptor acceptor;
   // 异步回写
-  SelectableQueue<Link *> write_back_queue;
+  SelectableQueue<WriteBackStruct *> write_back_queue;
   Handler * wake_up_handler;
   // 先用这个管理 link ... 
   std::vector<Link *>  links;

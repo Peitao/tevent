@@ -31,13 +31,22 @@ class HttpServer : public BaseServer {
     req->out = out;
     req->in->GetDataAsString(&req->raw_header);
     req->in->TakeData(req->raw_header.size());
+    link->IncRequest();
     // step 2. 
     service->OnRequest(req, boost::bind(&HttpServer::Done, this, req));
   }
   void Done(HttpRequst * req) {
     // package
-    req->out->Append(req->resopnse);
-    WakeUpForWriteBackInEventLoop(req->raw_link);
+    BaseServer::WriteBackStruct * wb_data = new BaseServer::WriteBackStruct();
+    wb_data->link = req->raw_link;
+    wb_data->out = req->out;
+    wb_data->close_when_write_done = false;
+    // test
+    if (req->resopnse.find("notalive") != std::string::npos) {
+      wb_data->close_when_write_done = true;
+    }
+    wb_data->data.swap(req->resopnse);
+    WakeUpForWriteBackInEventLoop(wb_data);
     delete req;
   }
  private:
