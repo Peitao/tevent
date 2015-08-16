@@ -30,6 +30,12 @@ class HttpServer : public BaseServer {
     req->in = in;
     req->out = out;
     req->in->GetDataAsString(&req->raw_header);
+    uint64 header_size = GetHttpRequest(req->raw_header);
+    if (header_size == 0) {
+      delete req;
+      return;
+    }
+    req->raw_header.resize(header_size);
     req->in->TakeData(req->raw_header.size());
     link->IncRequest();
     // step 2. 
@@ -40,14 +46,19 @@ class HttpServer : public BaseServer {
     BaseServer::WriteBackStruct * wb_data = new BaseServer::WriteBackStruct();
     wb_data->link = req->raw_link;
     wb_data->out = req->out;
-    wb_data->close_when_write_done = false;
+    wb_data->close_when_write_done = true;
     // test
-    if (req->resopnse.find("notalive") != std::string::npos) {
-      wb_data->close_when_write_done = true;
+    if (req->resopnse.find("alive") != std::string::npos) {
+      wb_data->close_when_write_done = false;
     }
     wb_data->data.swap(req->resopnse);
     WakeUpForWriteBackInEventLoop(wb_data);
     delete req;
+  }
+  int GetHttpRequest(const std::string ss) {
+    uint64 pos = ss.find("\r\n\r\n");
+    if (pos == std::string::npos) return 0;
+    return pos;
   }
  private:
   Service * service;

@@ -1,5 +1,5 @@
 OBJS = epoller.o eventloop.o wrapper.o buffer.o threads.o link.o
-CFLAGS += -O2 --std=c++0x 
+CFLAGS += -O3 --std=c++0x 
 #CFLAGS += -O2 --std=c++0x -I/home/peitao/work/build_tools/third_party/include
 LIB += -lrt -pthread
 
