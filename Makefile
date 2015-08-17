@@ -2,10 +2,17 @@ OBJS = epoller.o eventloop.o wrapper.o buffer.o threads.o link.o
 CFLAGS += -O3 --std=c++0x 
 #CFLAGS += -O2 --std=c++0x -I/home/peitao/work/build_tools/third_party/include
 LIB += -lrt -pthread
+TARS = http_server echo_server libtevent.a
 
-all: app
-app:${OBJS} test_main.cc
-	g++ ${OBJS} ${LIB} test_main.cc -o app
+all: ${TARS} 
+
+http_server:${OBJS} test_main.cc
+	g++ ${OBJS} ${LIB} test_main.cc -o http_server
+echo_server:${OBJS} echo_main.cc
+	g++ ${OBJS} ${LIB} echo_main.cc -o echo_server
+libtevent.a:${OBJS}
+	ar -crv -o libtevent.a ${OBJS}
+
 epoller.o:epoller.cc *.h
 	g++ -c epoller.cc ${CFLAGS} 
 eventloop.o:eventloop.cc *.h
@@ -19,7 +26,7 @@ threads.o:threads.cc *.h
 link.o:link.cc *.h
 	g++ -c link.cc ${CFLAGS}
 clean:
-	rm -f *.o app *_test
+	rm -f *.o ${TARS} *_test
 
 
 test: buffer_test

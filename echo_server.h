@@ -2,6 +2,7 @@
 #include "base_server.h"
 
 // 一个 server
+// 典型的单线程服务 like redis
 
 class EchoServer : public BaseServer {
  public:
